@@ -25,8 +25,58 @@ Update-Module -Name IntuneBackupAndRestore
 ```
 
 ## Prerequisites
-- Requires [Microsoft.Graph](https://github.com/microsoftgraph/msgraph-sdk-powershell) PowerShell Module (`Install-Module -Name Microsoft.Graph`, `Install-Module Microsoft.Graph.Beta -AllowClobber`)
-- Make sure to import the IntuneBackupAndRestore PowerShell module before using it with the `Import-Module IntuneBackupAndRestore` cmdlet.
+
+### Required PowerShell Modules
+- [Microsoft.Graph](https://github.com/microsoftgraph/msgraph-sdk-powershell) PowerShell Module
+  ```powershell
+  Install-Module -Name Microsoft.Graph
+  Install-Module -Name Microsoft.Graph.Beta -AllowClobber
+  ```
+- Make sure to import the IntuneBackupAndRestore PowerShell module before using it:
+  ```powershell
+  Import-Module IntuneBackupAndRestore
+  ```
+
+### Required Permissions
+
+**For Interactive Use (Delegated Permissions):**
+When running backups and restores interactively, connect with the following Microsoft Graph API scopes:
+
+```powershell
+Connect-MgGraph -Scopes @(
+    'DeviceManagementApps.ReadWrite.All',
+    'DeviceManagementConfiguration.ReadWrite.All',
+    'DeviceManagementServiceConfig.ReadWrite.All',
+    'DeviceManagementManagedDevices.ReadWrite.All'
+)
+```
+
+**⚠️ Important - New Permission Requirement:**
+Starting **July 31, 2025**, Microsoft requires the `DeviceManagementScripts.ReadWrite.All` permission for backing up and restoring:
+- Device Management Scripts (PowerShell Scripts)
+- Device Health Scripts (Proactive Remediations)
+
+To prepare for this change, add this scope when connecting:
+```powershell
+Connect-MgGraph -Scopes @(
+    'DeviceManagementApps.ReadWrite.All',
+    'DeviceManagementConfiguration.ReadWrite.All',
+    'DeviceManagementServiceConfig.ReadWrite.All',
+    'DeviceManagementManagedDevices.ReadWrite.All',
+    'DeviceManagementScripts.ReadWrite.All'  # Required from July 2025
+)
+```
+
+**For Application/Service Principal Use:**
+If running backups via automation or service principals, ensure your Azure AD App Registration has these Application permissions:
+- `DeviceManagementApps.ReadWrite.All`
+- `DeviceManagementConfiguration.ReadWrite.All`
+- `DeviceManagementServiceConfig.ReadWrite.All`
+- `DeviceManagementManagedDevices.ReadWrite.All`
+- `DeviceManagementScripts.ReadWrite.All` (required from July 2025)
+
+### Intune Administrator Role
+The account or service principal used must have at least **Intune Administrator** role assigned in Entra ID (Azure AD).
 
 ## Features
 
@@ -102,15 +152,37 @@ Update-Module -Name IntuneBackupAndRestore
 ## Examples
 
 ### Example 01 - Full Intune Backup
+
+**Quick Start:**
 ```powershell
+# Connect to Microsoft Graph
+Connect-MgGraph -Scopes 'DeviceManagementApps.ReadWrite.All', 'DeviceManagementConfiguration.ReadWrite.All', 'DeviceManagementServiceConfig.ReadWrite.All', 'DeviceManagementManagedDevices.ReadWrite.All'
+
+# Run full backup
 Start-IntuneBackup -Path C:\temp\IntuneBackup
 ```
 
+**What gets backed up:**
+- All Intune configurations (Device Configurations, Compliance Policies, Administrative Templates, etc.)
+- All assignments for each configuration
+- Files are saved as JSON in organized folders by policy type
+
 ### Example 02 - Full Intune Restore
+
+**Two-Step Restore Process:**
 ```powershell
+# Step 1: Restore all configurations (creates new policies with new IDs)
 Start-IntuneRestoreConfig -Path C:\temp\IntuneBackup
+
+# Step 2: Restore all assignments to the newly created policies
 Start-IntuneRestoreAssignments -Path C:\temp\IntuneBackup
 ```
+
+**Why two steps?**
+Separating configuration restore from assignment restore allows you to:
+1. Review restored configurations before applying assignments
+2. Restore configurations to a different tenant without assignments
+3. Restore only assignments if configurations already exist
 
 ### Example 03 - Restore Intune Assignments 
 If configurations have been restored:
@@ -165,5 +237,32 @@ Compare-IntuneBackupFile -ReferenceFilePath 'C:\temp\IntuneBackup\Device Configu
 Compare-IntuneBackupDirectories -ReferenceDirectory 'C:\temp\IntuneBackup' -DifferenceDirectory 'C:\temp\IntuneBackup2'
 ```
 
+### Cross-Tenant Migration
+This module is ideal for:
+- **Tenant-to-Tenant Migrations:** Migrate configurations between Microsoft 365 tenants
+- **Multi-Tenant Management:** Maintain consistent configurations across multiple tenants
+- **Testing Environments:** Clone production configurations to test/dev tenants
+
+## Performance Notes
+
+- **Backup Time:** Depends on the number of policies (typical: 5-15 minutes for 1000+ policies)
+- **Restore Time:** Slower than backup due to API rate limits (typical: 15-30 minutes for 1000+ policies)
+- **Storage:** JSON files are human-readable and average 2-10 KB per policy
+
 ## Known Issues
 - Does not support backing up Intune configuration items with duplicate Display Names. Files may be overwritten.
+- Client Apps are backed up for reference but cannot be restored (app binaries/packages are not included)
+- Some encrypted OMA settings in Device Configurations may require special permissions to decrypt during backup
+
+## Version History
+
+### Version 4.0.0
+- Complete migration to Microsoft.Graph PowerShell SDK (from deprecated MSGraph module)
+- Updated all API calls to use modern Graph SDK cmdlets
+- Improved error handling and resilience
+
+## Additional Resources
+
+- [Microsoft Graph API for Intune](https://learn.microsoft.com/en-us/graph/api/resources/intune-graph-overview)
+- [Microsoft Graph Permissions Reference](https://learn.microsoft.com/en-us/graph/permissions-reference)
+- [Intune Documentation](https://learn.microsoft.com/en-us/mem/intune/)
