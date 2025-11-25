@@ -26,7 +26,7 @@
     # Get all assignments from all policies
     $winAutopilotDeploymentProfiles = Invoke-MgGraphRequest -Uri "deviceManagement/windowsAutopilotDeploymentProfiles" | Get-MGGraphAllPages
 
-	if ($winAutopilotDeploymentProfiles.value -ne "") {
+	if ($winAutopilotDeploymentProfiles -and $winAutopilotDeploymentProfiles.Count -gt 0) {
 
 		# Create folder if not exists
 		if (-not (Test-Path "$Path\Autopilot Deployment Profiles\Assignments")) {

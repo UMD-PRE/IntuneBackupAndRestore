@@ -33,31 +33,39 @@ function Start-IntuneRestoreConfig() {
 
     #Connect to MS-Graph if required
     if ($null -eq (Get-MgContext)) {
-        connect-mggraph -scopes "EntitlementManagement.ReadWrite.All, DeviceManagementApps.ReadWrite.All, DeviceManagementConfiguration.ReadWrite.All, DeviceManagementServiceConfig.ReadWrite.All, DeviceManagementManagedDevices.ReadWrite.All" 
+        connect-mggraph -scopes "DeviceManagementApps.ReadWrite.All, DeviceManagementConfiguration.ReadWrite.All, DeviceManagementServiceConfig.ReadWrite.All, DeviceManagementManagedDevices.ReadWrite.All, DeviceManagementScripts.ReadWrite.All" 
     }else{
         Write-Host "MS-Graph already connected, checking scopes"
         $scopes = Get-MgContext | Select-Object -ExpandProperty Scopes
-        $IncorrectScopes = $false
-        if ($scopes -notcontains "DeviceManagementApps.ReadWrite.All") {$IncorrectScopes = $true}
-        if ($scopes -notcontains "DeviceManagementConfiguration.ReadWrite.All") {$IncorrectScopes = $true}
-        if ($scopes -notcontains "DeviceManagementServiceConfig.ReadWrite.All") {$IncorrectScopes = $true}
-        if ($scopes -notcontains "DeviceManagementManagedDevices.ReadWrite.All") {$IncorrectScopes = $true}
-        if ($IncorrectScopes) {
-            Write-Host "Incorrect scopes, please sign in again"
-            connect-mggraph -scopes "DeviceManagementApps.ReadWrite.All, DeviceManagementConfiguration.ReadWrite.All, DeviceManagementServiceConfig.ReadWrite.All, DeviceManagementManagedDevices.ReadWrite.All"
-        }else{
-            Write-Host "MS-Graph scopes are correct"     
+        $requiredScopes = @(
+            "DeviceManagementApps.ReadWrite.All",
+            "DeviceManagementConfiguration.ReadWrite.All",
+            "DeviceManagementServiceConfig.ReadWrite.All",
+            "DeviceManagementManagedDevices.ReadWrite.All"
+        )
+        # Use case-insensitive comparison
+        $missingScopes = $requiredScopes | Where-Object {
+            $requiredScope = $_
+            -not ($scopes | Where-Object { $_ -eq $requiredScope })
         }
-  
+
+        if ($missingScopes) {
+            Write-Error "Missing required permission scopes: $($missingScopes -join ', ')"
+            Write-Error "Please reconnect with the correct permissions using: Connect-MgGraph -Scopes 'DeviceManagementApps.ReadWrite.All, DeviceManagementConfiguration.ReadWrite.All, DeviceManagementServiceConfig.ReadWrite.All, DeviceManagementManagedDevices.ReadWrite.All'"
+            throw "Insufficient permissions. Restore cannot continue."
+        }else{
+            Write-Host "MS-Graph scopes are correct"
+        }
+
     }
 
-    Invoke-IntuneRestoreAutopilotDeploymentProfile -Path $Path
-    Invoke-IntuneRestoreConfigurationPolicy -Path $Path
-    Invoke-IntuneRestoreDeviceCompliancePolicy -Path $Path
-    Invoke-IntuneRestoreDeviceConfiguration -Path $Path
-    Invoke-IntuneRestoreDeviceHealthScript -Path $Path
-    Invoke-IntuneRestoreDeviceManagementScript -Path $Path
-    Invoke-IntuneRestoreGroupPolicyConfiguration -Path $Path
-    Invoke-IntuneRestoreDeviceManagementIntent -Path $Path
-    Invoke-IntuneRestoreAppProtectionPolicy -Path $Path
+    Invoke-IntuneRestoreAutopilotDeploymentProfile -Path $Path -ErrorAction Continue
+    Invoke-IntuneRestoreConfigurationPolicy -Path $Path -ErrorAction Continue
+    Invoke-IntuneRestoreDeviceCompliancePolicy -Path $Path -ErrorAction Continue
+    Invoke-IntuneRestoreDeviceConfiguration -Path $Path -ErrorAction Continue
+    Invoke-IntuneRestoreDeviceHealthScript -Path $Path -ErrorAction Continue
+    Invoke-IntuneRestoreDeviceManagementScript -Path $Path -ErrorAction Continue
+    Invoke-IntuneRestoreGroupPolicyConfiguration -Path $Path -ErrorAction Continue
+    Invoke-IntuneRestoreDeviceManagementIntent -Path $Path -ErrorAction Continue
+    Invoke-IntuneRestoreAppProtectionPolicy -Path $Path -ErrorAction Continue
 }

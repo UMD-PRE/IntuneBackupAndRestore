@@ -33,42 +33,48 @@ function Start-IntuneBackup() {
 
     #Connect to MS-Graph if required
     if ($null -eq (Get-MgContext)) {
-        connect-mggraph -scopes "EntitlementManagement.ReadWrite.All, DeviceManagementApps.ReadWrite.All, DeviceManagementConfiguration.ReadWrite.All, DeviceManagementServiceConfig.ReadWrite.All, DeviceManagementManagedDevices.ReadWrite.All" 
+        connect-mggraph -scopes "DeviceManagementApps.ReadWrite.All, DeviceManagementConfiguration.ReadWrite.All, DeviceManagementServiceConfig.ReadWrite.All, DeviceManagementManagedDevices.ReadWrite.All, DeviceManagementScripts.ReadWrite.All" 
     }else{
         Write-Host "MS-Graph already connected, checking scopes"
         $scopes = Get-MgContext | Select-Object -ExpandProperty Scopes
-        $IncorrectScopes = $false
-        if ($scopes -notcontains "DeviceManagementApps.ReadWrite.All") {$IncorrectScopes = $true}
-        if ($scopes -notcontains "DeviceManagementConfiguration.ReadWrite.All") {$IncorrectScopes = $true}
-        if ($scopes -notcontains "DeviceManagementServiceConfig.ReadWrite.All") {$IncorrectScopes = $true}
-        if ($scopes -notcontains "DeviceManagementManagedDevices.ReadWrite.All") {$IncorrectScopes = $true}
-        if ($IncorrectScopes) {
-            Write-Host "Incorrect scopes, please sign in again"
-            connect-mggraph -scopes "DeviceManagementApps.ReadWrite.All, DeviceManagementConfiguration.ReadWrite.All, DeviceManagementServiceConfig.ReadWrite.All, DeviceManagementManagedDevices.ReadWrite.All"
+        $requiredScopes = @(
+            "DeviceManagementApps.ReadWrite.All",
+            "DeviceManagementConfiguration.ReadWrite.All",
+            "DeviceManagementServiceConfig.ReadWrite.All",
+            "DeviceManagementManagedDevices.ReadWrite.All"
+        )
+        # Use case-insensitive comparison
+        $missingScopes = $requiredScopes | Where-Object {
+            $requiredScope = $_
+            -not ($scopes | Where-Object { $_ -eq $requiredScope })
+        }
+
+        if ($missingScopes) {
+            Write-Error "Missing required permission scopes: $($missingScopes -join ', ')"
+            Write-Error "Please reconnect with the correct permissions using: Connect-MgGraph -Scopes 'DeviceManagementApps.ReadWrite.All, DeviceManagementConfiguration.ReadWrite.All, DeviceManagementServiceConfig.ReadWrite.All, DeviceManagementManagedDevices.ReadWrite.All, DeviceManagementScripts.ReadWrite.All'"
+            throw "Insufficient permissions. Backup cannot continue."
         }else{
             Write-Host "MS-Graph scopes are correct"
         }
 		Write-Host ""
     }
 
-    Invoke-IntuneBackupAutopilotDeploymentProfile -Path $Path
-    Invoke-IntuneBackupAutopilotDeploymentProfileAssignment -Path $Path
-    Invoke-IntuneBackupClientApp -Path $Path
-    Invoke-IntuneBackupClientAppAssignment -Path $Path
-    Invoke-IntuneBackupConfigurationPolicy -Path $Path
-    Invoke-IntuneBackupConfigurationPolicyAssignment -Path $Path
-    Invoke-IntuneBackupDeviceCompliancePolicy -Path $Path
-    Invoke-IntuneBackupDeviceCompliancePolicyAssignment -Path $Path
-    Invoke-IntuneBackupDeviceConfiguration -Path $Path
-    Invoke-IntuneBackupDeviceConfigurationAssignment -Path $Path
-    Invoke-IntuneBackupDeviceHealthScript -Path $Path
-    Invoke-IntuneBackupDeviceHealthScriptAssignment -Path $Path
-    Invoke-IntuneBackupDeviceManagementScript -Path $Path
-    Invoke-IntuneBackupDeviceManagementScriptAssignment -Path $Path
-    Invoke-IntuneBackupGroupPolicyConfiguration -Path $Path
-    Invoke-IntuneBackupGroupPolicyConfigurationAssignment -Path $Path
-    Invoke-IntuneBackupDeviceManagementIntent -Path $Path
-    Invoke-IntuneBackupAppProtectionPolicy -Path $Path
-    Invoke-IntuneBackupDeviceHealthScript -Path $Path
-    Invoke-IntuneBackupDeviceHealthScriptAssignment -Path $Path
+    Invoke-IntuneBackupAutopilotDeploymentProfile -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupAutopilotDeploymentProfileAssignment -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupClientApp -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupClientAppAssignment -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupConfigurationPolicy -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupConfigurationPolicyAssignment -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupDeviceCompliancePolicy -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupDeviceCompliancePolicyAssignment -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupDeviceConfiguration -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupDeviceConfigurationAssignment -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupDeviceHealthScript -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupDeviceHealthScriptAssignment -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupDeviceManagementScript -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupDeviceManagementScriptAssignment -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupGroupPolicyConfiguration -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupGroupPolicyConfigurationAssignment -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupDeviceManagementIntent -Path $Path -ErrorAction Continue
+    Invoke-IntuneBackupAppProtectionPolicy -Path $Path -ErrorAction Continue
 }

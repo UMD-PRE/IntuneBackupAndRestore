@@ -31,7 +31,7 @@ function Invoke-IntuneBackupDeviceManagementIntent {
     Write-Verbose "Requesting Intents"
     $intents = Get-MgBetaDeviceManagementIntent -all
 
-	if ($intents.value -ne "") {
+	if ($intents -and $intents.Count -gt 0) {
 
 		# Create folder if not exists
 		if (-not (Test-Path "$Path\Device Management Intents")) {
