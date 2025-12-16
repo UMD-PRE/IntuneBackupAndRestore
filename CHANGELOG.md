@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.1] - 2025-12-16
+- Updated Microsoft.Graph Required Scopes. Special thanks to @Felix4567 #93
+- Fixed an issue where the Microsoft Graph $apiVersion was missing in a command. Special thanks to @magfrank #82
+- Fixed an issue where a Device Health Script was referring to an empty variable. Special thanks to @SirBeredan #85
+
 ## [4.0.0] - 2025-01-07
 - Updated to Microsoft.Graph PowerShell Module. Special thanks to @mhu4711
 - Added support for backing up and restoring Autopilot Deployment Profiles.
