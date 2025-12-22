@@ -265,6 +265,15 @@ This module is ideal for:
 
 ## Version History
 
+### Version 5.1.0 (2025-12-05)
+- **Fixed Policy Set backup** to handle API limitation where $expand is not supported on collection queries
+- **Fixed Device Enrollment Configuration restore** to use Beta API, include deviceEnrollmentConfigurationType, handle priority conflicts with auto-increment, and cast priority values to [int]
+- **Fixed Notification Template restore** with two-step process (create template, then add localized messages) and proper property handling
+- **Fixed Conditional Access and Named Location restore** to use Beta API and require Policy.ReadWrite.ConditionalAccess scope
+- **Updated scope validation** in Start-IntuneBackup and Start-IntuneRestoreConfig to include all 8 required scopes
+- **Enhanced verbose logging** throughout restore functions for better debugging
+- **Improved error handling** to continue operations when individual policy types fail
+
 ### Version 5.0.0 (2025-12-01)
 - **Added 17 new backup policy types:** Assignment Filters, Role Scope Tags, Device Enrollment Configurations, Named Locations, Conditional Access, Windows Update Profiles, App Configurations, Notification Templates, Branding, Terms & Conditions, Role Definitions, Policy Sets, and more
 - **Added 15 new restore functions** for all new backup types
