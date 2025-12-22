@@ -47,25 +47,23 @@ Connect-MgGraph -Scopes @(
     'DeviceManagementApps.ReadWrite.All',
     'DeviceManagementConfiguration.ReadWrite.All',
     'DeviceManagementServiceConfig.ReadWrite.All',
-    'DeviceManagementManagedDevices.ReadWrite.All'
-)
-```
-
-**⚠️ Important - New Permission Requirement:**
-Starting **July 31, 2025**, Microsoft requires the `DeviceManagementScripts.ReadWrite.All` permission for backing up and restoring:
-- Device Management Scripts (PowerShell Scripts)
-- Device Health Scripts (Proactive Remediations)
-
-To prepare for this change, add this scope when connecting:
-```powershell
-Connect-MgGraph -Scopes @(
-    'DeviceManagementApps.ReadWrite.All',
-    'DeviceManagementConfiguration.ReadWrite.All',
-    'DeviceManagementServiceConfig.ReadWrite.All',
     'DeviceManagementManagedDevices.ReadWrite.All',
-    'DeviceManagementScripts.ReadWrite.All'  # Required from July 2025
+    'DeviceManagementRBAC.ReadWrite.All',
+    'DeviceManagementScripts.ReadWrite.All',
+    'Policy.Read.All',
+    'Policy.ReadWrite.ConditionalAccess'
 )
 ```
+
+**Permission Requirements by Feature:**
+- **Core Intune Policies:** `DeviceManagementConfiguration.ReadWrite.All`
+- **App Management:** `DeviceManagementApps.ReadWrite.All`
+- **Service Configuration:** `DeviceManagementServiceConfig.ReadWrite.All`
+- **Device Management:** `DeviceManagementManagedDevices.ReadWrite.All`
+- **RBAC (Roles, Scope Tags):** `DeviceManagementRBAC.ReadWrite.All`
+- **Scripts & Remediations:** `DeviceManagementScripts.ReadWrite.All`
+- **Conditional Access (Read):** `Policy.Read.All`
+- **Conditional Access (Write):** `Policy.ReadWrite.ConditionalAccess`
 
 **For Application/Service Principal Use:**
 If running backups via automation or service principals, ensure your Azure AD App Registration has these Application permissions:
@@ -73,7 +71,10 @@ If running backups via automation or service principals, ensure your Azure AD Ap
 - `DeviceManagementConfiguration.ReadWrite.All`
 - `DeviceManagementServiceConfig.ReadWrite.All`
 - `DeviceManagementManagedDevices.ReadWrite.All`
-- `DeviceManagementScripts.ReadWrite.All` (required from July 2025)
+- `DeviceManagementRBAC.ReadWrite.All`
+- `DeviceManagementScripts.ReadWrite.All`
+- `Policy.Read.All`
+- `Policy.ReadWrite.ConditionalAccess`
 
 ### Intune Administrator Role
 The account or service principal used must have at least **Intune Administrator** role assigned in Entra ID (Azure AD).
@@ -81,71 +82,65 @@ The account or service principal used must have at least **Intune Administrator*
 ## Features
 
 ### Backup actions
-- Administrative Templates (Device Configurations)
-- Administrative Template Assignments
-- App Protection Policies
-- App Protection Policy Assignments
+**Device Enrollment & Configuration:**
+- Device Enrollment Configurations (Enrollment Restrictions, ESP)
 - Autopilot Deployment Profiles
 - Autopilot Deployment Profile Assignments
+- Device Configurations
+- Device Configuration Assignments
+- Administrative Templates (Group Policy)
+- Administrative Template Assignments
+- Settings Catalog Policies
+- Settings Catalog Policy Assignments
+
+**Compliance & Security:**
+- Device Compliance Policies
+- Device Compliance Policy Assignments
+- Conditional Access Policies
+- Named Locations (for Conditional Access)
+- Endpoint Security Configurations
+  - Security Baselines (Windows 10, Defender ATP, Edge)
+  - Antivirus, Disk Encryption, Firewall
+  - Endpoint Detection & Response
+  - Attack Surface Reduction, Account Protection
+- Device Management Intent Assignments
+
+**Applications & App Management:**
 - Client Apps
 - Client App Assignments
-- Device Compliance Policies
-- Device Compliance Policy Assignments
-- Device Configurations
-- Device Configuration Assignments
-- Device Management Scripts (Device Configuration -> PowerShell Scripts)
-- Device Management Script Assignments
-- Proactive Remediations
-- Proactive Remediation Assignments
-- Settings Catalog Policies
-- Settings Catalog Policy Assignments
-- Software Update Rings
-- Software Update Ring Assignments
-- Endpoint Security Configurations
-  - Security Baselines
-    - Windows 10 Security Baselines
-    - Microsoft Defender ATP Baselines
-    - Microsoft Edge Baseline
-  - Antivirus
-  - Disk encryption
-  - Firewall
-  - Endpoint detection and response
-  - Attack surface reduction
-  - Account protection
-  - Device compliance
-
-### Restore actions
-- Administrative Templates (Device Configurations)
-- Administrative Template Assignments
 - App Protection Policies
 - App Protection Policy Assignments
-- Autopilot Deployment Profiles
-- Autopilot Deployment Profile Assignments
-- Client App Assignments
-- Device Compliance Policies
-- Device Compliance Policy Assignments
-- Device Configurations
-- Device Configuration Assignments
-- Device Management Scripts (Device Configuration -> PowerShell Scripts)
-- Device Management Script Assignments
-- Proactive Remediations
-- Proactive Remediation Assignments
-- Settings Catalog Policies
-- Settings Catalog Policy Assignments
+- Mobile App Configurations (iOS/Android device-level)
+- Targeted Managed App Configurations (app-level MAM)
+- Policy Sets (grouped policies)
+
+**Windows Updates:**
+- Windows Feature Update Profiles
+- Windows Quality Update Profiles
+- Windows Driver Update Profiles
 - Software Update Rings
 - Software Update Ring Assignments
-- Endpoint Security Configurations
-  - Security Baselines
-    - Windows 10 Security Baselines
-    - Microsoft Defender ATP Baselines
-    - Microsoft Edge Baseline
-  - Antivirus
-  - Disk encryption
-  - Firewall
-  - Endpoint detection and response
-  - Attack surface reduction
-  - Account protection
-  - Device compliance
+
+**Scripts & Remediations:**
+- Device Management Scripts (PowerShell Scripts)
+- Device Management Script Assignments
+- Proactive Remediations (Device Health Scripts)
+- Proactive Remediation Assignments
+
+**Administrative & Branding:**
+- Assignment Filters
+- Role Scope Tags
+- Role Definitions (Custom RBAC roles)
+- Notification Templates
+- Terms and Conditions
+- Intune Branding Profiles
+
+### Restore actions
+All policy types listed above can be restored, with the following notes:
+- **Intelligent Restore:** Built-in/default objects that cannot be created are automatically skipped
+- **Two-Step Process:** Configurations are restored first, then assignments
+- **Cross-Tenant Support:** Policy IDs are automatically updated when restoring to different tenants
+- **Policy Sets:** Container is restored; items must be re-added (due to ID changes)
 
 > Please note that some Client App settings can be backed up, for instance the retrieval of Win32 (un)install cmdlets, requirements, etcetera. The Client App itself is not backed up and this module does not support restoring Client Apps at this time.
 
@@ -155,17 +150,31 @@ The account or service principal used must have at least **Intune Administrator*
 
 **Quick Start:**
 ```powershell
-# Connect to Microsoft Graph
-Connect-MgGraph -Scopes 'DeviceManagementApps.ReadWrite.All', 'DeviceManagementConfiguration.ReadWrite.All', 'DeviceManagementServiceConfig.ReadWrite.All', 'DeviceManagementManagedDevices.ReadWrite.All'
+# Connect to Microsoft Graph with all required permissions
+Connect-MgGraph -Scopes @(
+    'DeviceManagementApps.ReadWrite.All',
+    'DeviceManagementConfiguration.ReadWrite.All',
+    'DeviceManagementServiceConfig.ReadWrite.All',
+    'DeviceManagementManagedDevices.ReadWrite.All',
+    'DeviceManagementRBAC.ReadWrite.All',
+    'DeviceManagementScripts.ReadWrite.All',
+    'Policy.Read.All',
+    'Policy.ReadWrite.ConditionalAccess'
+)
 
 # Run full backup
 Start-IntuneBackup -Path C:\temp\IntuneBackup
 ```
 
 **What gets backed up:**
-- All Intune configurations (Device Configurations, Compliance Policies, Administrative Templates, etc.)
+- 30+ policy types including device configs, compliance, enrollment, updates, apps, and security policies
 - All assignments for each configuration
+- RBAC settings (scope tags, role definitions, assignment filters)
+- Conditional Access policies and named locations
 - Files are saved as JSON in organized folders by policy type
+
+**Error Handling:**
+The backup process now continues even if some policy types fail due to missing permissions. You'll see warnings for any skipped policy types.
 
 ### Example 02 - Full Intune Restore
 
@@ -256,7 +265,14 @@ This module is ideal for:
 
 ## Version History
 
-### Version 4.0.0
+### Version 5.0.0 (2025-12-01)
+- **Added 17 new backup policy types:** Assignment Filters, Role Scope Tags, Device Enrollment Configurations, Named Locations, Conditional Access, Windows Update Profiles, App Configurations, Notification Templates, Branding, Terms & Conditions, Role Definitions, Policy Sets, and more
+- **Added 15 new restore functions** for all new backup types
+- **Enhanced error handling:** Backup/restore now continues even if individual policy types fail
+- **Improved resilience:** Graceful handling of permission errors and API conflicts
+- **Updated permissions:** Added RBAC and Policy scopes for new features
+
+### Version 4.0.0 (2025-01-07)
 - Complete migration to Microsoft.Graph PowerShell SDK (from deprecated MSGraph module)
 - Updated all API calls to use modern Graph SDK cmdlets
 - Improved error handling and resilience
