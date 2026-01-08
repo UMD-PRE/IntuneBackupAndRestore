@@ -58,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated required permissions to include `DeviceManagementRBAC.ReadWrite.All` and `Policy.Read.All`.
 - Fixed issue where Graph API terminating errors would stop the entire backup/restore process.
 - Backup and restore operations now continue even if individual policy types fail due to permissions or API errors.
+## [4.0.1] - 2025-12-16
+- Updated Microsoft.Graph Required Scopes. Special thanks to @Felix4567 #93
+- Fixed an issue where the Microsoft Graph $apiVersion was missing in a command. Special thanks to @magfrank #82
+- Fixed an issue where a Device Health Script was referring to an empty variable. Special thanks to @SirBeredan #85
 
 ## [4.0.0] - 2025-01-07
 - Updated to Microsoft.Graph PowerShell Module. Special thanks to @mhu4711

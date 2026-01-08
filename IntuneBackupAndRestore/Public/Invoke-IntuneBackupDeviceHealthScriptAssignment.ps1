@@ -38,8 +38,8 @@
 			$null = New-Item -Path "$Path\Device Health Scripts\Assignments" -ItemType Directory
 		}
 	
-		foreach ($deviceHealthScript in $deviceHealthScripts) {
-			$assignments = Invoke-MgGraphRequest -Uri "deviceManagement/deviceHealthScripts/$($deviceHealthScript.id)/assignments" | Get-MGGraphAllPages
+		foreach ($deviceHealthScript in $healthScripts) {
+			$assignments = Invoke-MgGraphRequest -Uri "$ApiVersion/deviceManagement/deviceHealthScripts/$($deviceHealthScript.id)/assignments" | Get-MGGraphAllPages
 			
 			if ($assignments) {
 				$fileName = ($deviceHealthScript.displayName).Split([IO.Path]::GetInvalidFileNameChars()) -join '_'

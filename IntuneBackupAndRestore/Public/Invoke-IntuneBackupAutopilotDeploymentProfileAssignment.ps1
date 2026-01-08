@@ -1,4 +1,4 @@
-﻿function Invoke-IntuneBackupAutopilotDeploymentProfileAssignment {
+function Invoke-IntuneBackupAutopilotDeploymentProfileAssignment {
     <#
     .SYNOPSIS
     Backup Intune Autopilot Deployment Profile Assignments
