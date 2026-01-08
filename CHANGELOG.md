@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `Invoke-IntuneRestoreNotificationTemplate` to use two-step process: create template first, then add localized messages separately.
 - Fixed `Invoke-IntuneRestoreNotificationTemplate` to remove `defaultLocale` and `description` properties during creation (causes BadRequest errors).
 - Fixed `Invoke-IntuneRestoreConditionalAccessPolicy` and `Invoke-IntuneRestoreNamedLocation` to use Beta API and require Policy.ReadWrite.ConditionalAccess scope.
+- Fixed `Invoke-IntuneBackupConfigurationPolicyAssignment` to use pagination so more than 25 assignments are returned
 - Fixed scope validation in `Start-IntuneBackup` and `Start-IntuneRestoreConfig` to include all 8 required scopes including Policy.ReadWrite.ConditionalAccess.
 - Added comprehensive verbose logging throughout restore functions for debugging.
 - Updated `Start-IntuneBackup` scope validation from 4 scopes to 8 scopes (added DeviceManagementScripts, Policy.Read.All, Policy.ReadWrite.ConditionalAccess).
